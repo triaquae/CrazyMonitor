@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+
+{% block right-panel-content %}
+    <h2 class="page-header">主机:{{ host_obj.name }}</h2>
+
+    <div>
+
+      <!-- Nav tabs -->
+      <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="active"><a href="#graphs" aria-controls="graphs" role="tab" data-toggle="tab">趋势图</a></li>
+        <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Profile</a></li>
+        <li role="presentation"><a href="#messages" aria-controls="messages" role="tab" data-toggle="tab">Messages</a></li>
+        <li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Settings</a></li>
+      </ul>
+
+      <!-- Tab panes -->
+      <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="graphs">
+            <div class="row">
+                {% for service_name,val in monitored_services.services.items %}
+                   <div class="graph-container col-md-12">
+                        <div class="chart-range-selector" service="{{ service_name }}">
+                            <button type="button" time-range='latest'  class="btn btn-info btn-xs">实时数据</button>
+                            <button type="button" time-range='10mins'  class="btn btn-info btn-xs">2Weeks</button>
+                            <button type="button" time-range='30mins'  class="btn btn-info btn-xs">1Month</button>
+                            <button type="button" time-range='60mins'  class="btn btn-info btn-xs">25天</button>
+                        </div>
+                        <div id="{{ service_name }}-container" style="height: 400px; min-width: 310px"></div>
+                   </div>
+                {% endfor %}
+                <!--for services which has sub-services ,e.g network has eth0,eth1...-->
+                {% for service_name,val in monitored_services.sub_services.items %}
+                   {% for sub_service in val %}
+                   <div class="graph-container col-md-12">
+                        <div class="chart-range-selector" sub-service-name="{{ sub_service }}" service="{{ service_name }}">
+                            <button type="button" time-range='latest'  class="btn btn-info btn-xs">实时数据</button>
+                            <button type="button" time-range='10mins'  class="btn btn-info btn-xs">2Weeks</button>
+                            <button type="button" time-range='30mins'  class="btn btn-info btn-xs">1Month</button>
+                            <button type="button" time-range='60mins'  class="btn btn-info btn-xs">25天</button>
+                        </div>
+                        <div id="{{ service_name }}-{{ sub_service }}-container" style="height: 400px; min-width: 310px"></div>
+                   </div>
+                   {% endfor %}
+                {% endfor %}
+            </div>
+
+        </div>
+        <div role="tabpanel" class="tab-pane" id="profile">...</div>
+        <div role="tabpanel" class="tab-pane" id="messages">...</div>
+        <div role="tabpanel" class="tab-pane" id="settings">...</div>
+      </div>
+
+    </div>
+
+
+
+
+
+
+{% endblock %}
+
+{% block bottom-js %}
+<script>
+DataRefreshFlags = {}; //每个图有一个自动更新的任务,这个任务只在点击"实时数据"视图才会启动,每个任务会每次运行前先来这个dict做检测,看是否需要停止
+{% for service_name,val in monitored_services.services.items %}
+    DataRefreshFlags["{{ service_name }}"] = true; //当为false时每个图的自动刷新任务会停止;
+    $(function () {
+        var seriesOptions = [];
+            //seriesCounter = 0;
+        /**
+         * Create the chart when all data is loaded
+         * @returns {undefined}
+         */
+        $.getJSON("{% url 'get_graph' %}?service_key=" + '{{ service_name }}' +"&host_id={{ host_obj.id }}" + "&time_range=latest",    function (data_dic) {
+
+            console.log(data_dic);
+            $.each(data_dic,function(k,v){
+                seriesOptions.push({
+                    name:k,
+                    data:v
+                });
+            }); //end each
+            createChart('latest', '{{ service_name }}',seriesOptions);
+        });//end getJson
+
+    });
+{% endfor %}
+
+//那些有子服务的服务 单独在一个dict中, 需要单独loop处理,烦人...
+{% for service_name,val in monitored_services.sub_services.items %}
+    {% for sub_service_name in val %}
+        DataRefreshFlags["{{ service_name }}"] = true; //当为false时每个图的自动刷新任务会停止;
+        $(function () {
+            var seriesOptions = [];
+            /**
+             * Create the chart when all data is loaded
+             * @returns {undefined}
+             */
+            $.getJSON("{% url 'get_graph' %}?service_key={{ service_name }}&host_id={{ host_obj.id }}&time_range=latest&sub_service_key={{ sub_service_name }}",    function (data_dic) {
+
+                console.log(data_dic);
+                $.each(data_dic,function(k,v){
+                    seriesOptions.push({
+                        name:k,
+                        data:v
+                    });
+                }); //end each
+                createChart('latest', '{{ service_name }}',seriesOptions,'{{ sub_service_name }}');
+            });//end getJson
+
+        });
+    {% endfor %}
+{% endfor %}
+//end 那些有子服务的服务 单独在一个dict中, 需要单独loop处理,烦人...
+    $(document).ready(function(){
+        //get chart
+        Highcharts.setOptions({ global: { useUTC: false } });
+        $(".chart-range-selector button").click(function(){
+            var seriesOptions = [];
+            var service_name = $(this).parent().attr('service');
+            var sub_service_name = $(this).parent().attr('sub-service-name');
+            var time_range=  $(this).attr("time-range");
+            DataRefreshFlags[service_name] = false; //先把自动任务停掉, 如果点击的是"实时数据"按键,在create_chart方法自动任务会再自动启动起来的
+            $.getJSON("{% url 'get_graph' %}?service_key=" + service_name +"&host_id={{ host_obj.id }}" +"&time_range=" +time_range+"&sub_service_key=" + sub_service_name,    function (data_dic) {
+
+                console.log(data_dic);
+                seriesOptions = [];
+                $.each(data_dic,function(k,v){
+                    seriesOptions.push({
+                        name:k,
+                        data:v
+                    });
+                }); //end each
+
+                createChart(time_range, service_name,seriesOptions,sub_service_name);
+
+            });//end getJson
+
+
+        });//
+        //end get chart
+    });//end doc ready
+
+    function createChart(time_range,service_name, seriesOptions,sub_service_name) { //sub_service_name,e.g:eth1,eth0...
+        var graph_container_id = '#'+ service_name  + '-container'; //default
+        var graph_titile = service_name;
+        if (sub_service_name != null){
+            graph_container_id = '#'+ service_name  + '-' + sub_service_name +'-container';
+            console.log("----------->update graph has sub service:" + service_name + " sub service:" + sub_service_name);
+            graph_titile = service_name + ":" + sub_service_name;
+        }
+
+        var chart = $(graph_container_id).highcharts('StockChart', {
+            //start dynamic update
+            chart : {
+                events : {
+                    load : function () {
+
+                        // set up the updating of the chart each second
+                        var series = this.series;
+                        if (time_range == 'latest'){
+                           DataRefreshFlags[service_name] = true;//使自动更新任务启动
+                           var count = 0;
+                           console.log("print chart data");
+                           console.log(series[0]);
+                           console.log("end chart data") ;
+                           var GetLatestData = setInterval(function () {
+
+                               $.getJSON("{% url 'get_graph' %}?service_key=" + service_name +"&host_id={{ host_obj.id }}" + "&time_range=latest" +"&sub_service_key=" + sub_service_name,    function (data_dic) {
+                                    count++;
+                                    console.log(data_dic);
+                                    if (series){
+                                        //为什么要判断series为真,因为只要一切换时间刻度按钮,clearInterval就会触发取消自动刷新任务,且会重新画图,这时候很有可能当前的getJson任务的回调函数还没执行,
+                                        // 但重新画图会把当前的变量都清空,此时再获取series这个变量就是空了,所以后面的代码执行都 会出错
+                                         $.each(data_dic,function(k,v){
+
+                                            //var series_data = [];
+                                            if (v.length>0){
+                                                var last_point_from_server = v[v.length-1];
+                                                $.each(series,function(index){ //找到macth的series data
+                                                    //console.log('last pooint on server:' + service_name + ' 子服务:'+sub_service_name);
+                                                    //console.log(last_point_from_server);
+                                                    //console.log(series[index]);
+                                                    //console.log('series obj----------' + count + typeof(series[index]));
+                                                    if (typeof(series[index]) !='undefined'){
+                                                        if (series[index].name ==k){
+                                                            var series_data = series[index];
+                                                            var last_data_point_on_page = series_data.xData[series_data.xData.length-1];
+                                                            if (last_point_from_server[0] > last_data_point_on_page){ //需要添加这个值到页面
+                                                                series[index].addPoint(last_point_from_server,true,true);
+                                                                console.log("adding point to:"+ service_name +'--sub service:' + sub_service_name);
+                                                                console.log(last_point_from_server);
+                                                                console.log("done adding point to:"+ service_name +'--sub service:' + sub_service_name);
+
+                                                            }
+                                                        }
+
+                                                    } //end if series
+
+                                                });//end each
+
+                                            } //end if v.length
+                                        }); //end each
+                                    } //end if (series)
+
+                                });//end getJson
+
+                                console.log('----------------' );
+
+                               if (DataRefreshFlags[service_name] == false){
+                                   clearInterval(GetLatestData);
+                                   console.log('----------------停止 自动刷新' );
+                               }
+
+                            }, 5000);
+                        }else{
+                            DataRefreshFlags[service_name] = false;
+                            return
+                        }//end if time_range
+
+                    }
+                }
+            },
+            //end dynamic update
+
+              rangeSelector: {
+                    enabled: false
+              },
+
+            title: {
+                text: graph_titile,
+                //align: 'center',
+                //x: 40
+            },
+            yAxis: {
+                labels: {
+                    formatter: function () {
+                        //return (this.value > 0 ? ' + ' : '') + this.value + '%';
+                        return '%';
+                    }
+                },
+                plotLines: [{
+                    value: 0,
+                    width: 2,
+                    color: 'silver'
+                }]
+            },
+
+            /*plotOptions: {
+                series: {
+                    compare: 'percent'
+                }
+            },*/
+            legend: {
+                enabled:  true,
+                layout: 'horizontal',
+                align: 'center',
+                horizontalAlign: 'top',
+                borderWidth: 0
+            },
+
+            tooltip: {
+                //pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.change}%)<br/>',
+                pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b>%<br/>',
+                valueDecimals: 2
+            },
+
+            series: seriesOptions
+
+
+
+        });
+    }
+
+
+</script>
+
+{% endblock %}

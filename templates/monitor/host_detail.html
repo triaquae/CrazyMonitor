@@ -1,0 +1,262 @@
+{% extends 'monitor/index.html' %}
+
+{% block  page-title %}
+
+    主机:{{ host_obj.name }}[{{ host_obj.ip_addr }}]
+{% endblock %}
+
+{% block page-content %}
+
+<div class="row">
+
+<div class="tab-base">
+
+        <!--Nav Tabs-->
+        <ul class="nav nav-tabs">
+            <li class="active">
+                <a data-toggle="tab" href="#triggers-tab" aria-expanded="false">已触发事件<span class="badge badge-purple">27</span></a>
+            </li>
+            <li class="">
+                <a data-toggle="tab" href="#host-graphs" aria-expanded="false">趋势图</a>
+            </li>
+            <li class="">
+                <a data-toggle="tab" href="#demo-lft-tab-3" aria-expanded="true">最近数据</a>
+            </li>
+            <li class="">
+                <a data-toggle="tab" href="#demo-lft-tab-3" aria-expanded="true">脚本</a>
+            </li>
+        </ul>
+
+        <!--Tabs Content-->
+        <div class="tab-content">
+            <div id="triggers-tab" class="tab-pane fade active in">
+                <h4 class="text-thin">First Tab Content</h4>
+                {% include 'monitor/trigger_list.html' %}
+            </div>
+            <div id="host-graphs" class=" fade">
+
+
+            </div>
+            <div id="demo-lft-tab-3" class="tab-pane fade ">
+                <h4 class="text-thin">Third Tab Content</h4>
+                <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block bottom-js %}
+<script src="/static/plugins/highstock/js/highstock.js"></script>
+<script>
+function LoadHostTriggers(){
+    $("#triggers-tab").load("{% url 'trigger_list' %}?by_host_id={{ host_obj.id }}");
+}
+
+function LoadHostGraphs(time_range){
+    var graph_data = {};
+    $.getJSON("{% url 'get_graphs' %}",{host_id:"{{ host_obj.id }}",time_range:time_range},function(callback){
+        //console.log(callback);
+        if (time_range == 'latest'){
+            $.each(callback,function(service_id,val){
+                //console.log(val);
+                if (!val.has_sub_service){ //cpu .mem .,has no sub service
+                    graph_data[val.name] = {}
+                    for (index in val.items){
+                        graph_data[val.name][ val.items[index]] = [];
+                    }
+                }else{ //has 多网卡等
+                    console.log("sub service raw data length:" + val.raw_data.length);
+                    if (val.raw_data.length > 1){ //第一个值不能用,你懂的
+                        var service_latest_point = JSON.parse( val.raw_data[ val.raw_data.length -1 ]  )[0] ;
+                        $.each(service_latest_point.data,function(key,item_val){
+                            var service_key = val.name + '_'+key;
+                            //console.log(service_key);
+                            graph_data[service_key] = {}
+                            for (index in val.items){
+                                graph_data[service_key][ val.items[index]] = [];
+                            }
+                        });//end each
+                    }
+                }
+
+            });//end each
+            //上面那段循环是为了生成适应画图的数据结构,接下来开始把画图的数据填充进去
+            $.each(callback,function(service_id,val){
+                if (val.raw_data.length >1){
+                    if(!val.has_sub_service){ //没有子服务
+                        for (i in val.raw_data){ //第一个不能用
+                            if (i>0){
+                                var data = JSON.parse(val.raw_data[i]); //[object,timestamp]
+                                //console.log(data);
+
+                                for (j in val.items){
+                                    var service_item_key = val.items[j];
+                                    //console.log( service_item_key + data[0][service_item_key] );
+                                    graph_data[val.name][service_item_key].push([data[1]*1000, parseInt(data[0][service_item_key])]);
+                                }
+                            }
+                        }//end for (i in val.raw_data)
+                    }else {//有子服务
+                        for (i in val.raw_data){
+                            if (i>0){
+                                var sub_service_data = JSON.parse(val.raw_data[i]);
+
+                                //console.log(sub_service_data[0].data);
+                                //
+                                $.each(sub_service_data[0].data,function(item_key,item_val){
+                                    //console.log(item_key);
+                                    //console.log(item_val);
+                                    var service_key = val.name + '_'+item_key;
+                                    for ( index_key in  item_val){
+                                        //console.log(service_key +'--'+index_key + '--' + item_val[index_key]);
+                                        graph_data[service_key][index_key].push( [sub_service_data[1]*1000, parseInt(item_val[index_key] )]);
+                                    }
+                                });//end each
+
+                            }
+                        }
+
+                    }
+                }
+
+            });//end each 2
+        }
+
+        console.log(graph_data);
+        CreateGraphs(graph_data);
+    });//end getjson
+}
+
+function CreateGraphs(graph_data){
+    var counter = 1 ;//用来判断是否要起新行
+    $.each(graph_data,function(service_name,data){
+        var graph_container = "<div class='col-md-6' id='graph-"+ service_name +"'>" +service_name+"</div>" ;
+
+        if (counter % 2 == 1 ){ //要起新行
+            var row_ele = "<div row-counter='"+ counter+"' class='row'></div>";
+            $("#host-graphs").append(row_ele);
+
+            $("#host-graphs div[row-counter='"+ counter+"']").append(graph_container);
+        }else{
+            $("#host-graphs div[row-counter='"+ (counter-1) +"']").append(graph_container);
+
+        }
+        counter++;
+
+        CreateSingleGraph(service_name,data,"graph-"+service_name);
+    })
+
+}
+
+function CreateSingleGraph(service_name,service_data,graph_ele_id){
+        var seriesOptions = [],
+        //seriesCounter = 0,
+        //names = ['MSFT', 'AAPL', 'GOOG'],
+        // create the chart when all data is loaded
+        createChart = function () {
+            $('#' + graph_ele_id).highcharts('StockChart', {
+                rangeSelector: {
+                    selected: 0,
+                    buttons: [{
+                        type: 'minute',
+                        count: 30,
+                        text: '30分'
+                    }, {
+                        type: 'hour',
+                        count: 3,
+                        text: '3时'
+                    }, {
+                        type: 'day',
+                        count: 1,
+                        text: '1天'
+                    }, {
+                        type: 'week',
+                        count: 1,
+                        text: '1周'
+                    }, {
+                        type: 'month',
+                        count: 1,
+                        text: '1月'
+                    }, {
+                        type: 'all',
+                        count: 1,
+                        text: 'All'
+                    }]
+                },
+
+                legend: {
+                    enabled: true,
+                    align: 'center',
+                    backgroundColor: '#FCFFC5',
+                    borderColor: 'black',
+                    borderWidth: 2,
+                    layout: 'horizontal',
+                    verticalAlign: 'top',
+                    y: 100,
+                    shadow: true
+                },
+
+
+
+                title: {
+                    text: service_name,
+                    align: 'left',
+                    x: 40
+                },
+
+                yAxis: {
+
+                    plotLines: [{
+                        value: 0,
+                        width: 2,
+                        color: 'silver'
+                    }]
+                },
+
+                tooltip: {
+                    pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b><br/>',
+                    valueDecimals: 2
+                },
+                series: seriesOptions
+            });
+        };
+    $.each(service_data, function (item_name, item_data) {
+        //$.getJSON('http://www.hcharts.cn/datas/jsonp.php?filename=' + name.toLowerCase() + '-c.json&callback=?',    function (data) {
+            seriesOptions.push({
+                name: item_name,
+                data: item_data
+            });
+            // As we're loading the data asynchronously, we don't know what order it will arrive. So
+            // we keep a counter and create the chart when all the data is loaded.
+            /*seriesCounter += 1;
+            if (seriesCounter === names.length) {
+                createChart();
+            }*/
+        //});
+    });
+    createChart();
+}
+$(document).ready(function(){
+
+    LoadHostTriggers();
+
+    LoadHostGraphs('latest');
+    var refresh_triggers = setInterval(function(){
+        LoadHostTriggers();
+    },5000);
+
+
+
+    Highcharts.setOptions({
+        global: {
+            useUTC: true
+        }
+    });
+
+
+});//end doc ready
+
+</script>
+{% endblock %}

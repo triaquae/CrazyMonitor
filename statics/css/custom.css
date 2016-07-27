@@ -1,0 +1,15 @@
+
+.graph-container {
+
+    margin-top: 25px;
+}
+
+.severity-5{
+    background-color: red;
+}
+.severity-4{
+    background-color: orangered;
+}
+.severity-3{
+    background-color: yellow;
+}

@@ -1,0 +1,183 @@
+{% extends 'monitor/index.html' %}
+
+{% block  page-title %}
+
+    已监控主机列表
+{% endblock %}
+
+{% block page-content %}
+
+  <div class="row">
+    <div class="col-lg-12">
+
+        <!--Network Line Chart-->
+        <!--===================================================-->
+        <div class="panel">
+            <div class="panel-heading">
+                <div class="panel-control">
+                    <button id="demo-panel-network-refresh" data-toggle="panel-overlay" data-target="#demo-panel-network" class="btn"><i class="fa fa-rotate-right"></i></button>
+                    <div class="btn-group">
+                        <button class="dropdown-toggle btn" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-gear"></i></button>
+                        <ul class="dropdown-menu dropdown-menu-right">
+                            <li><a href="#">Action</a></li>
+                            <li><a href="#">Another action</a></li>
+                            <li><a href="#">Something else here</a></li>
+                            <li class="divider"></li>
+                            <li><a href="#">Separated link</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <h3 class="panel-title">主机状态</h3>
+            </div>
+
+
+
+            <!--Chart information-->
+            <div class="panel-body " style="position:relative;z-index:2">
+                <div class="row">
+                 <table id='host_status_list' class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <td>主机</td>
+                            <td>监控服务</td>
+                            <td>状态</td>
+                            <td>Up time</td>
+                            <td>Diaster</td>
+                            <td>High</td>
+                            <td>Average</td>
+                            <td>Warning</td>
+                            <td>Info</td>
+                            <td>最后更新</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for host in host_list %}
+                        <tr host-id="{{ host.id }}">
+                            <td data-type="name"><a href="{% url 'host_detail' host.id %}" > {{ host.name }}({{ host.ip_addr }}) </a> </td>
+                            <td data-type="services">{{ host.get_status_display }}</td>
+                            <td data-type="status">{{ host.get_status_display }}</td>
+                            <td data-type="uptime">loading...</td>
+                            <td    onmouseover="ShowTriggerDetail({{ host.id }}, 5)" data-type="5" >
+
+                            </td>
+                            <td onmouseover="ShowTriggerDetail({{ host.id }}, 4)" data-type="4">2
+                                <a href="#" class="add-popover" data-original-title="Bootstrap Popover" data-content="content" data-placement="bottom" data-trigger="focus" data-toggle="popover">Dismissible popover</a>
+
+                            </td>
+                            <td onmouseover="ShowTriggerDetail({{ host.id }}, 3)" data-type="3" ></td>
+                            <td onmouseover="ShowTriggerDetail({{ host.id }}, 2)" data-type="2"></td>
+                            <td onmouseover="ShowTriggerDetail({{ host.id }}, 1)" data-type="1"></td>
+                            <td data-type="last_update">loading...</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                 </table>
+                </div>
+
+            </div>
+
+
+        </div>
+        <!--===================================================-->
+        <!--End network line chart-->
+
+    </div>
+
+  </div>
+
+{% endblock %}
+
+{% block bottom-js %}
+<script>
+
+
+    TriggersData = {};//全局变量,用户在页面上看trigger详细时从这个变量里取数据
+
+    $(document).ready(function(){
+        GetHostStatus();
+        var refresh_hoststatus = setInterval(function(){
+            GetHostStatus();
+        },10000);
+    });//end doc ready
+    function ShowTriggerDetail(host_id, severity){
+        //console.log(host_id,severity);
+        var triggers = TriggersData[host_id]['triggers'][severity];
+        console.log(TriggersData[host_id]);
+        if (triggers.length >0){
+            console.log(triggers);
+            var detail_html = "<table class='table  table-condensed'> <thead><tr> <td>Time</td><td>问题</td><td>持续时间</td><td>确认</td><td>动作</td> </tr> </thead>" +
+                    "<tbody>";
+            for (index in triggers){
+                var tr = "<tr><td>" +triggers[index].time + "</td><td>" + triggers[index].msg +"</td><td> " + triggers[index].duration +"</td><td>" + "知道了" +"</td><td>action</td></tr>" ;
+                detail_html +=tr ;
+            }
+            detail_html += "</tbody></table>"
+            $.niftyNoty({
+                type: "danger",
+                container : "floating",
+                title : "报警信息",
+                message : detail_html,
+                closeBtn : true,
+                timer : 15000,
+            });
+
+        }
+
+    }
+
+
+    function GetHostStatus(){
+        $.getJSON("{% url 'get_hosts_status' %}",function(callback){
+            //console.log(callback);
+
+            $.each(callback,function(index,host_obj){
+                //console.log(host_obj);
+                var host_html_ele  = $("#host_status_list tr[host-id='"+ host_obj.id +"']");
+                //console.log(host_html_ele);
+                GetStatusStyle(host_html_ele,host_obj.status);
+                $(host_html_ele).find("td[data-type='uptime']").text(host_obj.uptime);
+                $(host_html_ele).find("td[data-type='last_update']").text(host_obj.last_update);
+
+                //$(host_html_ele).find("td[data-type='5'] ").text(host_obj.triggers[5].length);
+
+                //$(host_html_ele).find("td[data-type='4'] ").text(host_obj.triggers[4].length);
+                UpdateHostSeverity( $(host_html_ele).find("td[data-type='5'] "), host_obj.triggers[5]);
+                UpdateHostSeverity( $(host_html_ele).find("td[data-type='4'] "), host_obj.triggers[4]);
+                UpdateHostSeverity( $(host_html_ele).find("td[data-type='3'] "), host_obj.triggers[3]);
+                UpdateHostSeverity( $(host_html_ele).find("td[data-type='2'] "), host_obj.triggers[2]);
+                UpdateHostSeverity( $(host_html_ele).find("td[data-type='1'] "), host_obj.triggers[1]);
+                //$(host_html_ele).find("td[data-type='3']").text(host_obj.triggers[3].length);
+                //$(host_html_ele).find("td[data-type='2']").text(host_obj.triggers[2].length);
+                //$(host_html_ele).find("td[data-type='1']").text(host_obj.triggers[1].length);
+
+                //AddTriggerDetailIntoModel($(host_html_ele).find("td[data-type='4'] "),host_obj.triggers[4]);
+                TriggersData[host_obj.id] = host_obj;
+            });//end each
+
+        })
+    }
+
+    function UpdateHostSeverity(ele,severity_data){
+        ele.text(severity_data.length);
+        if (severity_data.length >0){
+            ele.attr('class','btn-danger');
+        }else {
+            ele.attr('class','');
+        }
+    }
+
+    function GetStatusStyle(host_html_ele,status){
+        $(host_html_ele).find("td[data-type='status']").text(status);
+
+        var status_dic ={
+            'Online':'alert-success',
+            'Down':'alert-danger',
+            'Unreachable':'alert-danger',
+            'Offline':'alert-default',
+            'Problem':'alert-warning',
+        }
+        var status_class = status_dic[status];
+        $(host_html_ele).find("td[data-type='status']").attr('class',status_class);
+    }
+</script>
+{% endblock %}

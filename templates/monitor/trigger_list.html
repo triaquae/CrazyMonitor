@@ -1,0 +1,59 @@
+{% load custom_tags %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="panel">
+            <div class="panel-heading">
+                <h3 class="panel-title">Hover rows</h3>
+            </div>
+
+            <!--Hover Rows-->
+            <!--===================================================-->
+            <div class="panel-body">
+            {{ trigger_list }}
+                <table class="table table-hover table-vcenter">
+                    <thead>
+                        <tr>
+                            <th >问题级别</th>
+                            <th class="text-center">状态</th>
+                            <th class="text-center">最后更新</th>
+                            <th class="text-center">持续时间</th>
+                            <th class="text-center">主机</th>
+                            <th class="text-center">问题内容</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for key,item in trigger_list.items  %}
+                        <tr>
+                            {% if 'trigger_obj' in item %}
+                                <td class="severity-{{ item.trigger_obj.severity }}">{{ item.trigger_obj.get_severity_display }}</td>
+                            {% else %}
+                                <td class="severity-4">High</td>
+                            {% endif %}
+
+                            <td class="text-center">
+                                {{ item.host_obj.get_status_display }}
+                            </td>
+                            <td class="text-center">
+                                {{ item.time }}
+                            </td>
+                            <td class="text-center">{{ item.duration }}</td>
+                            <td class="text-center">{{ item.host_obj}}</td>
+                            <td class="">
+                                {% if not item.positive_expressions %}
+                                    {{ item.msg}}
+                                {% else %}
+                                    {% trigger_context item %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+            <!--===================================================-->
+            <!--End Hover Rows-->
+
+        </div>
+    </div>
+</div>

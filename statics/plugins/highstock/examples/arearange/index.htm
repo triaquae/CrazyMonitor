@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>Highstock Example</title>
+
+		<script type="text/javascript" src="http://cdn.hcharts.cn/jquery/jquery-1.8.3.min.js"></script>
+		<style type="text/css">
+${demo.css}
+		</style>
+		<script type="text/javascript">
+$(function () {
+    // Notice that the dataset has missing data
+    $.getJSON('http://www.hcharts.cn/datas/jsonp.php?filename=range.json&callback=?', function (data) {
+
+        $('#container').highcharts('StockChart', {
+
+            chart: {
+                type: 'arearange'
+            },
+
+            rangeSelector: {
+                selected: 2
+            },
+
+            title: {
+                text: 'Temperature variation by day'
+            },
+
+            tooltip: {
+                valueSuffix: '°C'
+            },
+
+            series: [{
+                name: 'Temperatures',
+                data: data
+            }]
+
+        });
+    });
+
+});
+		</script>
+	</head>
+	<body>
+<script src="http://cdn.hcharts.cn/highstock/highstock.js"></script>
+<script src="http://cdn.hcharts.cn/highstock/highcharts-more.js"></script>
+<script src="http://cdn.hcharts.cn/highstock/modules/exporting.js"></script>
+
+<div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+
+	</body>
+</html>

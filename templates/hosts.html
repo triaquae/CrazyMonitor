@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block right-panel-content %}
+    <h2 class="page-header">所有监控的主机</h2>
+    <div class="row">
+        <div class="table-responsive">
+            <table class="table ">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Hostname</th>
+                  <th>Ip Addr</th>
+                  <th>Status</th>
+                  <th>Duration</th>
+                  <th>Services</th>
+                  <th>Last Update</th>
+                </tr>
+              </thead>
+              <tbody>
+               {% for host in host_list %}
+                <tr host-id="{{ host.id }}">
+                    <td>{{ host.id }}</td>
+                    <td data-type="name"><a href="{% url 'host_detail' host.id %}" > {{ host.name }} </a> </td>
+                    <td data-type="ip_addr">{{ host.ip_addr }}</td>
+                    <td data-type="status">{{ host.get_status_display }}</td>
+                    <td data-type="duration">loading...</td>
+                    <td>Total(10),OK(3),Critical(4)</td>
+                    <td data-type="last_update"></td>
+                </tr>
+              {% endfor %}
+            ddddd
+              </tbody>
+            </table>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block bottom-js %}
+<script type="text/javascript">
+    function RefreshStatus(){
+        $.getJSON("{%  url 'get_hosts_status' %}",function(callback){
+            console.log(callback);
+            $.each(callback,function(index,ele){
+                //get the host ele on page and update it
+                var host_ele = $("tr[host-id='"+ ele.id +"']");
+                if (host_ele){ //万一这是台新加的机器呢,这样是在页面上没有的,
+                    console.log(host_ele);
+                    var host_ele_str = "tr[host-id='"+ ele.id +"']";
+                    var hostname_ele = $(host_ele_str + " " + "td[data-type='name'] a");
+                    var ip_ele = $(host_ele_str + " " + "td[data-type='ip_addr'] ");
+                    var status_ele = $(host_ele_str + " " + "td[data-type='status'] ");
+                    var lastupdate_ele = $(host_ele_str + " " + "td[data-type='last_update'] ");
+                    $(hostname_ele).html(ele.name);
+                    $(ip_ele).html(ele.ip_addr);
+                    $(status_ele).html(ele.status);
+
+                    $(lastupdate_ele).html(ele.last_update);
+
+                    UpdateHostStatus(ele,host_ele_str);
+
+                }
+            });//end each
+        })
+    }
+    RefreshStatus();
+    function  UpdateHostStatus(host_data,host_ele){
+        var status_css = {
+            'Online':'css-success',
+            'Down':'css-danger',
+            'Unreachable':'css-warning',
+            'Offline':'css-default'
+        }
+        $(host_ele + " " + "td[data-type='status'] ").attr('class', '');//先清空class
+        $(host_ele + " " + "td[data-type='status'] " ).addClass(status_css[host_data.status]);
+    }
+
+
+    $(document).ready(function(){
+        var RefreshStatusInterval = setInterval(function(){
+            RefreshStatus();
+        },10000);
+    });//end doc ready
+</script>
+{% endblock %}
