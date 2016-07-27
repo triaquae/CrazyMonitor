@@ -6,5 +6,6 @@
 http://edu.51cto.com/course/course_id-6208.html 
 
 # 项目截图
+ ![image](https://github.com/triaquae/CrazyMonitor/blob/master/share/screeshots/flow.png)
  ![image](https://github.com/triaquae/CrazyMonitor/blob/master/share/screeshots/monitor1.png)
  ![image](https://github.com/triaquae/CrazyMonitor/blob/master/share/screeshots/monitor2.png)
