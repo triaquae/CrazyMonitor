@@ -4,7 +4,8 @@
 
 # 项目讲解视频
 http://edu.51cto.com/course/course_id-6208.html 
-
+# python自动化交流群
+Python花式撩妹之路 304154367 
 # 项目截图
  ![image](https://github.com/triaquae/CrazyMonitor/blob/master/share/screeshots/flow.png)
  ![image](https://github.com/triaquae/CrazyMonitor/blob/master/share/screeshots/monitor1.png)
