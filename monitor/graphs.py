@@ -1,7 +1,7 @@
 #_*_coding:utf-8_*_
 __author__ = 'Alex Li'
 
-import models
+from  monitor import models
 import json
 from CrazyMonitor import  settings
 
@@ -53,7 +53,8 @@ class GraphGenerator2(object):
             service_redis_key = "StatusData_%s_%s_%s" %(self.host_id,val_dic['name'],self.time_range)
             print('service_redis_key',service_redis_key)
             service_raw_data = self.redis.lrange(service_redis_key,0,-1)
-            service_data_dic[service_id]['raw_data'] =service_raw_data
+            service_raw_data =  [item.decode() for item in service_raw_data]
+            service_data_dic[service_id]['raw_data'] = service_raw_data
 
         return service_data_dic
 class GraphGenerator(object):

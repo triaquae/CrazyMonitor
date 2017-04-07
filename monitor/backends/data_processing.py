@@ -5,11 +5,13 @@ from CrazyMonitor import settings
 from monitor import models
 from monitor.backends import redis_conn
 import operator
+
+
 class DataHandler(object):
     def __init__(self,django_settings,connect_redis=True):
         self.django_settings = django_settings
-        self.poll_interval = 0.5
-        self.config_update_interval = 120
+        self.poll_interval = 3 #每3秒进行一次全局轮训
+        self.config_update_interval = 120 #每120s重新从数据库加载一次配置数据
         self.config_last_loading_time = time.time()
         self.global_monitor_dic = {}
         self.exit_flag = False
@@ -30,6 +32,7 @@ class DataHandler(object):
             if time.time() - self.config_last_loading_time >= self.config_update_interval:
                 print("\033[41;1mneed update configs ...\033[0m")
                 self.update_or_load_configs()
+                print("monitor dic",self.global_monitor_dic)
             if self.global_monitor_dic:
                 for h,config_dic in self.global_monitor_dic.items():
                     print('handling host:\033[32;1m%s\033[0m' %h)
@@ -61,9 +64,10 @@ class DataHandler(object):
                     #    self.load_service_data_and_calulating(h,trigger_obj)
 
             time.sleep(self.poll_interval)
+
     def data_point_validation(self,host_obj,service_obj):
         '''
-        only do basic data validataion here, alert if the client didn't report data to server in the configured time interval
+        only do basic data validation here, alert if the client didn't report data to server in the configured time interval
         :param h:
         :param service_obj:
         :return:
@@ -71,7 +75,7 @@ class DataHandler(object):
         service_redis_key = "StatusData_%s_%s_latest" %(host_obj.id,service_obj.name) #拼出此服务在redis中存储的对应key
         latest_data_point = self.redis.lrange(service_redis_key,-1,-1)
         if latest_data_point: #data list is not empty,
-            latest_data_point = json.loads(latest_data_point[0])
+            latest_data_point = json.loads(latest_data_point[0].decode())
             #print('laste::::',latest_data_point)
             print("\033[41;1mlatest data point\033[0m %s" % latest_data_point)
             latest_service_data,last_report_time = latest_data_point
@@ -137,6 +141,7 @@ class DataHandler(object):
             if trigger_res:#终于走到这一步,该触发报警了
                 print("##############trigger alert:",trigger_obj.severity,trigger_res)
                 self.trigger_notifier(host_obj,trigger_obj.id, positive_expressions,msg=trigger_obj.name) #msg 需要专门分析后生成, 这里是临时写的
+
     def update_or_load_configs(self):
         '''
         load monitor configs from Mysql DB
@@ -223,7 +228,9 @@ class DataHandler(object):
         #先把之前的trigger加载回来,获取上次报警的时间,以统计 故障持续时间
         trigger_redis_key = "host_%s_trigger_%s" % (host_obj.id, trigger_id)
         old_trigger_data = self.redis.get(trigger_redis_key)
+        print("old_trigger_data",old_trigger_data)
         if old_trigger_data:
+            old_trigger_data = old_trigger_data.decode()
             trigger_startime = json.loads(old_trigger_data)['start_time']
             msg_dic['start_time'] = trigger_startime
             msg_dic['duration'] = round(time.time() - trigger_startime)
@@ -260,9 +267,9 @@ class ExpressionProcess(object):
         #stop_loading_flag = False #循环去redis里一个点一个点的取数据,直到变成True
         #while not stop_loading_flag:
         print("approximate dataset nums:", approximate_data_points,time_in_sec)
-        data_range_raw = self.main_ins.redis.lrange(self.service_redis_key,-approximate_data_points,-1)
+        data_range_raw = self.main_ins.redis.lrange(self.service_redis_key,-int(approximate_data_points),-1)
         #print("\033[31;1m------>%s\033[0m" % data_range)
-        approximate_data_range = [json.loads(i) for i in data_range_raw]
+        approximate_data_range = [json.loads(i.decode()) for i in data_range_raw]
         data_range = [] #精确的需要的数据 列表
         for point  in approximate_data_range:
             #print('bread point:', point)
@@ -306,6 +313,7 @@ class ExpressionProcess(object):
             return res_dic
         else:
             return False
+
     def get_avg(self,data_set):
         '''
         return average value of given data set
@@ -362,6 +370,7 @@ class ExpressionProcess(object):
                 return [False,avg_res,k]
         else:#可能是由于最近这个服务 没有数据 汇报 过来,取到的数据 为空,所以没办法 判断阈值
             return [False,None,None]
+
     def judge(self,calculated_val):
         '''
         determine whether the index has reached the alert benchmark
@@ -374,6 +383,7 @@ class ExpressionProcess(object):
         calc_func = getattr(operator,self.expression_obj.operator_type)
         #calc_func = operator.eq....
         return calc_func(calculated_val,self.expression_obj.threshold)
+
     def get_hit(self,data_set):
         '''
         return hit times  value of given data set

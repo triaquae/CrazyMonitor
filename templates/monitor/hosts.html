@@ -5,6 +5,13 @@
     已监控主机列表
 {% endblock %}
 
+{% block breadcrumb%}
+<ol class="breadcrumb">
+    <li><a href="{% url 'dashboard' %}">Home</a></li>
+    <li class="active">主机列表</li>
+</ol>
+{% endblock %}
+
 {% block page-content %}
 
   <div class="row">
@@ -53,7 +60,7 @@
                     <tbody>
                     {% for host in host_list %}
                         <tr host-id="{{ host.id }}">
-                            <td data-type="name"><a href="{% url 'host_detail' host.id %}" > {{ host.name }}({{ host.ip_addr }}) </a> </td>
+                            <td data-type="name"><a class="btn-link" href="{% url 'host_detail' host.id %}" > {{ host.name }}({{ host.ip_addr }}) </a> </td>
                             <td data-type="services">{{ host.get_status_display }}</td>
                             <td data-type="status">{{ host.get_status_display }}</td>
                             <td data-type="uptime">loading...</td>

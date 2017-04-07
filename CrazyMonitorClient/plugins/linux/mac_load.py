@@ -14,7 +14,9 @@ def monitor():
     else:
         value_dic = {}
         uptime = result.split(',')[:1][0]
-        load1,load5,load15 = result.split('load average:')[1].split(',')
+        print(result)
+        #load1,load5,load15 = result.split('load averages:')[1].split(',')
+        load1,load5,load15 = result.split('load averages:')[1].split()
         value_dic= {
             #'uptime': uptime,
             'load1': load1,
@@ -23,3 +25,7 @@ def monitor():
             'status': status
         }
     return value_dic
+
+
+
+print(monitor())

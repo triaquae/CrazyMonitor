@@ -1,7 +1,6 @@
 #_*_coding:utf-8_*_
 __author__ = 'Alex Li'
 
-import django
 import redis
 
 def redis_conn(django_settings):

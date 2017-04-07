@@ -3,9 +3,9 @@ __author__ = 'Alex Li'
 
 
 configs ={
-    'HostID': 2,
+    'HostID': 1,
     "Server": "localhost",
-    "ServerPort": 8000,
+    "ServerPort": 9000,
     "urls":{
 
         'get_configs' :['api/client/config','get'],  #acquire all the services will be monitored

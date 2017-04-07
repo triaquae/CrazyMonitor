@@ -41,25 +41,18 @@ class ManagementUtility(object):
         else:
             self.registered_actions[sys.argv[1]]()
     def start(self):
-        '''
-        start monitor server frontend and backend
-        :return:
-        '''
+        '''start monitor server frontend and backend'''
         reactor = data_processing.DataHandler(settings)
         reactor.looping()
 
     def stop(self):
-        '''
-        stop monitor server
-        :return:
-        '''
+        '''stop monitor server'''
+
     def trigger_watch(self):
-        '''
-        start to listen triggers
-        :return:
-        '''
+        '''start to listen triggers'''
         trigger_watch = trigger_handler.TriggerHandler(settings)
         trigger_watch.start_watching()
+
     def main_help_text(self, commands_only=False):
         """
         Returns the script's main help text, as a string.
@@ -67,7 +60,7 @@ class ManagementUtility(object):
         if not commands_only:
             print("supported commands as flow:")
             for k,v in self.registered_actions.items():
-                print("    %s\t" % (k))
+                print("    %s%s" % (k.ljust(20),v.__doc__))
             exit()
 
 

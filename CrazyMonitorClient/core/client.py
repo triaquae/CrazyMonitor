@@ -81,7 +81,7 @@ class ClientHandle(object):
             print('---report data:',report_data)
             self.url_request(request_action,request_url,params=report_data)
         else:
-            print("\033[31;1mCannot find plugin names [%s] in plugin_api\033[0m"% plugin_name )
+            print("\033[31;1mCannot find service [%s]'s plugin name [%s] in plugin_api\033[0m"% (service_name,plugin_name ))
         print('--plugin:',val)
 
 
@@ -104,7 +104,7 @@ class ClientHandle(object):
                 callback = req_data.read()
                 #print "-->server response:",callback
                 return callback
-            except urllib2.URLError,e:
+            except urllib2.URLError as e:
                 exit("\033[31;1m%s\033[0m"%e)
 
         elif action in ('post','POST'):
@@ -117,6 +117,6 @@ class ClientHandle(object):
                 callback = json.loads(callback)
                 print "\033[31;1m[%s]:[%s]\033[0m response:\n%s" %(action,abs_url,callback)
                 return callback
-            except Exception,e:
+            except Exception as e:
                 print('---exec',e)
                 exit("\033[31;1m%s\033[0m"%e)

@@ -5,14 +5,18 @@ from django.views.decorators.csrf import csrf_exempt
 from  CrazyMonitor import settings
 import json,time
 # Create your views here.
-from serializer import  ClientHandler,get_host_triggers
+from  monitor.serializer import  ClientHandler,get_host_triggers
 import json
-from backends import redis_conn
-from backends import data_optimization
-import models
-from backends import data_processing
-import serializer
-import graphs
+from monitor.backends import redis_conn
+from monitor.backends import data_optimization
+from monitor import models
+from monitor.backends import data_processing
+from monitor import serializer
+from monitor import graphs
+
+
+
+
 REDIS_OBJ = redis_conn.redis_conn(settings)
 
 def dashboard(request):
@@ -32,6 +36,7 @@ def hosts(request):
 def host_detail(request,host_id):
     host_obj = models.Host.objects.get(id=host_id)
     return render(request,'monitor/host_detail.html',{'host_obj':host_obj})
+
 def host_detail_old(request,host_id):
     host_obj = models.Host.objects.get(id=host_id)
 
@@ -74,6 +79,7 @@ def hosts_status(request):
     hosts_data = hosts_data_serializer.by_hosts()
 
     return HttpResponse(json.dumps(hosts_data))
+
 def client_configs(request,client_id):
     print("--->",client_id)
     config_obj = ClientHandler(client_id)
@@ -94,6 +100,7 @@ def service_data_report(request):
             #StatusData_1_memory_latest
             client_id = request.POST.get('client_id')
             service_name = request.POST.get('service_name')
+            #把数据存下来
             data_saveing_obj = data_optimization.DataStore(client_id,service_name,data,REDIS_OBJ)
 
             #redis_key_format = "StatusData_%s_%s_latest" %(client_id,service_name)
@@ -124,7 +131,7 @@ def graphs_gerator(request):
 
     graphs_generator = graphs.GraphGenerator2(request,REDIS_OBJ)
     graphs_data = graphs_generator.get_host_graph()
-
+    print("graphs_data",graphs_data)
     return HttpResponse(json.dumps(graphs_data))
 
 def graph_bak(request):
@@ -140,9 +147,17 @@ def graph_bak(request):
     if graph_data:
         return HttpResponse(json.dumps(graph_data))
 
+# def trigger_list(request):
+#
+#     trigger_handle_obj = serializer.TriggersView(request,REDIS_OBJ)
+#     trigger_data = trigger_handle_obj.fetch_related_filters()
+#
+#     return render(request,'monitor/trigger_list.html',{'trigger_list':trigger_data})
 def trigger_list(request):
 
-    trigger_handle_obj = serializer.TriggersView(request,REDIS_OBJ)
-    trigger_data = trigger_handle_obj.fetch_related_filters()
+    host_id = request.GET.get("by_host_id")
 
-    return render(request,'monitor/trigger_list.html',{'trigger_list':trigger_data})
+    host_obj = models.Host.objects.get(id=host_id)
+
+    alert_list = host_obj.eventlog_set.all().order_by('-date')
+    return render(request,'monitor/trigger_list.html',locals())

@@ -19,11 +19,17 @@ def get_linux_cpu():
 
 def host_alive_check():
     return host_alive.monitor()
+
 def GetMacCPU():
     #return cpu.monitor()
     return cpu_mac.monitor()
+
 def GetNetworkStatus():
     return network.monitor()
 
 def get_memory_info():
     return memory.monitor()
+
+
+def get_linux_load():
+    return load.monitor()

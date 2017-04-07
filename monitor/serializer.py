@@ -1,7 +1,7 @@
 #_*_coding:utf-8_*_
 __author__ = 'Alex Li'
 
-import models
+from monitor import models
 import json,time
 from django.core.exceptions import  ObjectDoesNotExist
 
@@ -69,12 +69,15 @@ class TriggersView(object):
             trigger_keys = self.redis.keys(trigger_match_keys)
             print(trigger_keys)
             for key in trigger_keys:
-                data = json.loads(self.redis.get(key))
-                if data.get('trigger_id'):
-                    trigger_obj = models.Trigger.objects.get(id=data.get('trigger_id'))
-                    data['trigger_obj'] = trigger_obj
-                data['host_obj'] = host_obj
-                trigger_dic[key] = data
+                data = self.redis.get(key)
+                if data:
+                    data = json.loads(data.decode())
+
+                    if data.get('trigger_id'):
+                        trigger_obj = models.Trigger.objects.get(id=data.get('trigger_id'))
+                        data['trigger_obj'] = trigger_obj
+                    data['host_obj'] = host_obj
+                    trigger_dic[key] = data
 
         return trigger_dic
 
@@ -157,12 +160,13 @@ class StatusSerializer(object):
 
         for trigger_key in trigger_keys:
             trigger_data = self.redis.get(trigger_key)
-            if trigger_key.endswith("None"):
-                trigger_dic[4].append(json.loads(trigger_data))
+            print("trigger_key",trigger_key)
+            if trigger_key.decode().endswith("None"):
+                trigger_dic[4].append(json.loads(trigger_data.decode()))
             else:
-                trigger_id = trigger_key.split('_')[-1]
+                trigger_id = trigger_key.decode().split('_')[-1]
                 trigger_obj = models.Trigger.objects.get(id=trigger_id)
-                trigger_dic[trigger_obj.severity].append(json.loads(trigger_data))
+                trigger_dic[trigger_obj.severity].append(json.loads(trigger_data.decode()))
 
         #print('triiger data',trigger_dic)
         return trigger_dic

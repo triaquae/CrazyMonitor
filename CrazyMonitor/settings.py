@@ -77,17 +77,24 @@ WSGI_APPLICATION = 'CrazyMonitor.wsgi.application'
 # https://docs.djangoproject.com/en/1.9/ref/settings/#databases
 
 
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'CrazyMonitor_test',
-        'USER':'root',
-        'PASSWORD':'',
-        'HOST':'',
-        'PORT':3306,
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'monitor_db.sqlite3'),
     }
 }
+
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'CrazyMonitor_test',
+#         'USER':'root',
+#         'PASSWORD':'',
+#         'HOST':'',
+#         'PORT':3306,
+#     }
+# }
 
 
 
@@ -133,7 +140,7 @@ STATICFILES_DIRS = (
 )
 
 
-
+AUTH_USER_MODEL = 'monitor.UserProfile'
 
 REDIS_CONN = {
     'HOST': 'localhost',
@@ -146,10 +153,21 @@ TRIGGER_CHAN = 'trigger_event_channel'
 #all latest monitor data will save under this key in redis
 
 STATUS_DATA_OPTIMIZATION = {
-    'latest':[0,600],
+    'latest':[0,600], #0 存储真实数据,600个点
     '10mins':[600,600], #4days
     '30mins':[1800,600],#14days
     '60mins':[3600,600], #25days
 }
 
 REPORT_LATE_TOLERANCE_TIME = 10 #allow service report late than monitor interval no more than defined seconds.
+
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_USE_TLS = False
+EMAIL_HOST = 'smtp.exmail.qq.com'
+EMAIL_PORT = 25
+EMAIL_HOST_USER = 'qiaojianlong@oldboyedu.com'
+EMAIL_HOST_PASSWORD = 'QJL171012qjl'
+DEFAULT_FROM_EMAIL = '老男孩IT教育<qiaojianlong@oldboyedu.com>'

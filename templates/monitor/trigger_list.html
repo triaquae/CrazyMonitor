@@ -13,41 +13,23 @@
                 <table class="table table-hover table-vcenter">
                     <thead>
                         <tr>
-                            <th >问题级别</th>
-                            <th class="text-center">状态</th>
-                            <th class="text-center">最后更新</th>
-                            <th class="text-center">持续时间</th>
-                            <th class="text-center">主机</th>
-                            <th class="text-center">问题内容</th>
+                            <th >事件类型</th>
+                            <th class="text-center">级别</th>
+                            <th class="text-center">内容</th>
+                            <th class="text-center">日期</th>
+
                         </tr>
                     </thead>
                     <tbody>
-                        {% for key,item in trigger_list.items  %}
+                        {% for alert in alert_list %}
                         <tr>
-                            {% if 'trigger_obj' in item %}
-                                <td class="severity-{{ item.trigger_obj.severity }}">{{ item.trigger_obj.get_severity_display }}</td>
-                            {% else %}
-                                <td class="severity-4">High</td>
-                            {% endif %}
+                            <td>{{ alert.get_event_type_display }}</td>
+                            <td>{{ alert.trigger }}</td>
+                            <td>{{ alert.log }}</td>
+                            <td>{{ alert.date }}</td>
 
-                            <td class="text-center">
-                                {{ item.host_obj.get_status_display }}
-                            </td>
-                            <td class="text-center">
-                                {{ item.time }}
-                            </td>
-                            <td class="text-center">{{ item.duration }}</td>
-                            <td class="text-center">{{ item.host_obj}}</td>
-                            <td class="">
-                                {% if not item.positive_expressions %}
-                                    {{ item.msg}}
-                                {% else %}
-                                    {% trigger_context item %}
-                                {% endif %}
-                            </td>
                         </tr>
                         {% endfor %}
-
                     </tbody>
                 </table>
             </div>

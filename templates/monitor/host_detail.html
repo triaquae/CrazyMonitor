@@ -4,6 +4,15 @@
 
     主机:{{ host_obj.name }}[{{ host_obj.ip_addr }}]
 {% endblock %}
+{% block breadcrumb%}
+<ol class="breadcrumb">
+    <li><a href="{% url 'dashboard' %}">Home</a></li>
+    <li><a href="{% url 'hosts' %}">主机列表</a></li>
+    <li class="active">主机监控详情</li>
+</ol>
+{% endblock %}
+
+
 
 {% block page-content %}
 
@@ -13,11 +22,12 @@
 
         <!--Nav Tabs-->
         <ul class="nav nav-tabs">
+
             <li class="active">
-                <a data-toggle="tab" href="#triggers-tab" aria-expanded="false">已触发事件<span class="badge badge-purple">27</span></a>
+                <a data-toggle="tab" href="#host-graphs" aria-expanded="false">趋势图</a>
             </li>
             <li class="">
-                <a data-toggle="tab" href="#host-graphs" aria-expanded="false">趋势图</a>
+                <a data-toggle="tab" href="#triggers-tab" aria-expanded="false">已触发事件</a>
             </li>
             <li class="">
                 <a data-toggle="tab" href="#demo-lft-tab-3" aria-expanded="true">最近数据</a>
@@ -29,11 +39,11 @@
 
         <!--Tabs Content-->
         <div class="tab-content">
-            <div id="triggers-tab" class="tab-pane fade active in">
+            <div id="triggers-tab" class="tab-pane fade ">
                 <h4 class="text-thin">First Tab Content</h4>
                 {% include 'monitor/trigger_list.html' %}
             </div>
-            <div id="host-graphs" class=" fade">
+            <div id="host-graphs" class=" fade active in">
 
 
             </div>
@@ -111,6 +121,7 @@ function LoadHostGraphs(time_range){
                                     var service_key = val.name + '_'+item_key;
                                     for ( index_key in  item_val){
                                         //console.log(service_key +'--'+index_key + '--' + item_val[index_key]);
+                                        //console.log(graph_data[service_key]);
                                         graph_data[service_key][index_key].push( [sub_service_data[1]*1000, parseInt(item_val[index_key] )]);
                                     }
                                 });//end each

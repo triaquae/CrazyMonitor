@@ -1,6 +1,8 @@
-#!_*_coding:utf8_*_
 from django.db import models
-from django.contrib.auth.models import User
+from monitor import auth
+from django.utils.translation import ugettext_lazy as _
+from django.utils.safestring import mark_safe
+
 # Create your models here.
 
 
@@ -28,14 +30,14 @@ class Host(models.Model):
     status = models.IntegerField(u'状态',choices=status_choices,default=1)
     memo = models.TextField(u"备注",blank=True,null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 class HostGroup(models.Model):
     name =  models.CharField(max_length=64,unique=True)
     templates = models.ManyToManyField("Template",blank=True)
     memo = models.TextField(u"备注",blank=True,null=True)
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 class ServiceIndex(models.Model):
@@ -48,7 +50,7 @@ class ServiceIndex(models.Model):
     )
     data_type = models.CharField(u'指标数据类型',max_length=32,choices=data_type_choices,default='int')
     memo = models.CharField(u"备注",max_length=128,blank=True,null=True)
-    def __unicode__(self):
+    def __str__(self):
         return "%s.%s" %(self.name,self.key)
 
 class Service(models.Model):
@@ -59,7 +61,7 @@ class Service(models.Model):
     has_sub_service = models.BooleanField(default=False,help_text=u"如果一个服务还有独立的子服务 ,选择这个,比如 网卡服务有多个独立的子网卡") #如果一个服务还有独立的子服务 ,选择这个,比如 网卡服务有多个独立的子网卡
     memo = models.CharField(u"备注",max_length=128,blank=True,null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
     #def get_service_items(obj):
     #    return ",".join([i.name for i in obj.items.all()])
@@ -68,7 +70,7 @@ class Template(models.Model):
     name = models.CharField(u'模版名称',max_length=64,unique=True)
     services = models.ManyToManyField('Service',verbose_name=u"服务列表")
     triggers = models.ManyToManyField('Trigger',verbose_name=u"触发器列表",blank=True)
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -92,7 +94,7 @@ class TriggerExpression(models.Model):
 
     logic_type_choices = (('or','OR'),('and','AND'))
     logic_type = models.CharField(u"与一个条件的逻辑关系",choices=logic_type_choices,max_length=32,blank=True,null=True)
-    def __unicode__(self):
+    def __str__(self):
         return "%s %s(%s(%s))" %(self.service_index,self.operator_type,self.data_calc_func,self.data_calc_args)
     class Meta:
         pass #unique_together = ('trigger_id','service')
@@ -111,7 +113,7 @@ class Trigger(models.Model):
     enabled = models.BooleanField(default=True)
     memo = models.TextField(u"备注",blank=True,null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return "<serice:%s, severity:%s>" %(self.name,self.get_severity_display())
 
 
@@ -129,12 +131,12 @@ class Action(models.Model):
 
     enabled = models.BooleanField(default=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 class ActionOperation(models.Model):
     name =  models.CharField(max_length=64)
-    step = models.SmallIntegerField(u"第n次告警",default=1)
+    step = models.SmallIntegerField(u"第n次告警",default=1,help_text="当trigger触发次数小于这个值时就执行这条记录里报警方式")
     action_type_choices = (
         ('email','Email'),
         ('sms','SMS'),
@@ -145,7 +147,7 @@ class ActionOperation(models.Model):
     _msg_format = '''Host({hostname},{ip}) service({service_name}) has issue,msg:{msg}'''
 
     msg_format = models.TextField(u"消息格式",default=_msg_format)
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -157,21 +159,97 @@ class Maintenance(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
-class UserProfile(models.Model):
-    user = models.OneToOneField(User)
-    name = models.CharField(max_length=32)
+class EventLog(models.Model):
+    """存储报警及其它事件日志"""
+    event_type_choices = ((0,'报警事件'),(1,'维护事件'))
+    event_type = models.SmallIntegerField(choices=event_type_choices,default=0)
+    host = models.ForeignKey("Host")
+    trigger = models.ForeignKey("Trigger",blank=True,null=True)
+    log = models.TextField(blank=True,null=True)
+    date = models.DateTimeField(auto_now_add=True)
+
+
+    def __str__(self):
+        return "host%s  %s" %(self.host , self.log)
+
+class UserProfile(auth.AbstractBaseUser, auth.PermissionsMixin):
+    email = models.EmailField(
+        verbose_name='email address',
+        max_length=255,
+        unique=True,
+
+    )
+    password = models.CharField(_('password'), max_length=128,
+                                help_text=mark_safe('''<a class='btn-link' href='password'>重置密码</a>'''))
+
     phone = models.BigIntegerField(blank=True,null=True)
     weixin = models.CharField(max_length=64,blank=True,null=True)
-    email = models.EmailField(blank=True,null=True)
+
+    is_active = models.BooleanField(default=True)
+    is_admin = models.BooleanField(default=False)
+    is_staff = models.BooleanField(
+        verbose_name='staff status',
+        default=True,
+        help_text='Designates whether the user can log into this admin site.',
+    )
+    name = models.CharField(max_length=32)
+    #role = models.ForeignKey("Role",verbose_name="权限角色")
+
+    memo = models.TextField('备注', blank=True, null=True, default=None)
+    date_joined = models.DateTimeField(blank=True, null=True, auto_now_add=True)
+
+    USERNAME_FIELD = 'email'
+    # REQUIRED_FIELDS = ['name','token','department','tel','mobile','memo']
+    REQUIRED_FIELDS = ['name']
+
+    def get_full_name(self):
+        # The user is identified by their email address
+        return self.email
+
+    def get_short_name(self):
+        # The user is identified by their email address
+        return self.email
+
+    def __str__(self):  # __str__ on Python 2
+        return self.email
+
+    # def has_perm(self, perm, obj=None):
+    #     "Does the user have a specific permission?"
+    #     # Simplest possible answer: Yes, always
+    #     return True
+    def has_perms(self, perm, obj=None):
+        "Does the user have a specific permission?"
+        # Simplest possible answer: Yes, always
+        return True
+
+    def has_module_perms(self, app_label):
+        "Does the user have permissions to view the app `app_label`?"
+        # Simplest possible answer: Yes, always
+        return True
+
+
+    @property
+    def is_superuser(self):
+        "Is the user a member of staff?"
+        # Simplest possible answer: All admins are staff
+        return self.is_admin
+
+
+    objects = auth.UserManager()
+
+    class Meta:
+        verbose_name = '账户'
+        verbose_name_plural = '账户'
 
 
 
-    def __unicode__(self):
-        return self.name
+
+
+
 ''''
 CPU
     idle 80
