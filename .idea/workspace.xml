@@ -2,21 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="16b689e9-fa6d-420b-8031-277b56aaa2f2" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/monitor_db.sqlite3" afterPath="$PROJECT_DIR$/monitor_db.sqlite3" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/CrazyMonitor.iml" afterPath="$PROJECT_DIR$/.idea/CrazyMonitor.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CrazyMonitor/settings.py" afterPath="$PROJECT_DIR$/CrazyMonitor/settings.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/monitor/backends/data_optimization.py" afterPath="$PROJECT_DIR$/monitor/backends/data_optimization.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/monitor/backends/data_processing.py" afterPath="$PROJECT_DIR$/monitor/backends/data_processing.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/monitor/backends/management.py" afterPath="$PROJECT_DIR$/monitor/backends/management.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/monitor/backends/perpetual_machine.py" afterPath="$PROJECT_DIR$/monitor/backends/perpetual_machine.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/monitor/templatetags/custom_tags.py" afterPath="$PROJECT_DIR$/monitor/templatetags/custom_tags.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/monitor/urls.py" afterPath="$PROJECT_DIR$/monitor/urls.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/monitor/views.py" afterPath="$PROJECT_DIR$/monitor/views.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/templates/monitor/index.html" afterPath="$PROJECT_DIR$/templates/monitor/index.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/templates/monitor/trigger_list.html" afterPath="$PROJECT_DIR$/templates/monitor/trigger_list.html" />
     </list>
     <ignored path="CrazyMonitor.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -151,8 +137,8 @@
       <file leaf-file-name="README.md" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/README.md">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="480">
-              <caret line="20" column="0" lean-forward="true" selection-start-line="20" selection-start-column="0" selection-end-line="20" selection-end-column="0" />
+            <state relative-caret-position="120">
+              <caret line="5" column="3" lean-forward="false" selection-start-line="5" selection-start-column="3" selection-end-line="5" selection-end-column="3" />
               <folding />
             </state>
           </provider>
@@ -1286,8 +1272,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/README.md">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="480">
-          <caret line="20" column="0" lean-forward="true" selection-start-line="20" selection-start-column="0" selection-end-line="20" selection-end-column="0" />
+        <state relative-caret-position="120">
+          <caret line="5" column="3" lean-forward="false" selection-start-line="5" selection-start-column="3" selection-end-line="5" selection-end-column="3" />
           <folding />
         </state>
       </provider>
