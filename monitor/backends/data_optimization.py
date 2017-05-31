@@ -54,14 +54,15 @@ class DataStore(object):
         #print( self.client_id,self.service_name,self.data)
         if self.data['status'] ==0:# service data is valid
             for key,data_series_val in settings.STATUS_DATA_OPTIMIZATION.items():
+                data_series_optimize_interval,max_data_point = data_series_val
                 data_series_key_in_redis = "StatusData_%s_%s_%s" %(self.client_id,self.service_name,key)
                 #print(data_series_key_in_redis,data_series_val)
                 last_point_from_redis = self.redis_conn_obj.lrange(data_series_key_in_redis,-1,-1)
                 if not last_point_from_redis: #this key is not exist in redis
-                    #so initialize a new key ,the first data point in the data set will only be used to identify that when was \
+                    #so initialize a new key ,the first data point in the data set will only be used to identify that when  \
                     #the data got saved last time
                     self.redis_conn_obj.rpush(data_series_key_in_redis,json.dumps([None,time.time()] ))
-                if data_series_val[0] == 0:#this dataset is for unoptimized data, only the latest data no need optimiaztion
+                if data_series_optimize_interval == 0:#this dataset is for unoptimized data, only the latest data no need optimiaztion
                     self.redis_conn_obj.rpush(data_series_key_in_redis,json.dumps([self.data, time.time()]))
 
                 else: #data might needs to be optimized
@@ -69,11 +70,12 @@ class DataStore(object):
                     last_point_data,last_point_save_time =  \
                         json.loads(self.redis_conn_obj.lrange(data_series_key_in_redis,-1,-1)[0].decode())
 
-                    if time.time() - last_point_save_time >= data_series_val[0]: # reached the data point update interval ,
+                    if time.time() - last_point_save_time >= data_series_optimize_interval: # reached the data point update interval ,
                         lastest_data_key_in_redis = "StatusData_%s_%s_latest" %(self.client_id,self.service_name)
                         print("calulating data for key:\033[31;1m%s\033[0m" %data_series_key_in_redis )
                         #最近n分钟的数据 已经取到了,放到了data_set里
-                        data_set = self.get_data_slice(lastest_data_key_in_redis,data_series_val[0])
+
+                        data_set = self.get_data_slice(lastest_data_key_in_redis,data_series_optimize_interval)
                         print('--------------------------len dataset :',len(data_set))
                         if len(data_set)>0:
                             #接下来拿这个data_set交给下面这个方法,让它算出优化的结果 来
@@ -81,7 +83,7 @@ class DataStore(object):
                             if optimized_data:
                                 self.save_optimized_data(data_series_key_in_redis, optimized_data)
                 #同时确保数据在redis中的存储数量不超过settings中指定 的值
-                if self.redis_conn_obj.llen(data_series_key_in_redis) >= data_series_val[1]:
+                if self.redis_conn_obj.llen(data_series_key_in_redis) >= max_data_point:
                     self.redis_conn_obj.lpop(data_series_key_in_redis) #删除最旧的一个数据
                 #self.redis_conn_obj.ltrim(data_series_key_in_redis,0,data_series_val[1])
         else:

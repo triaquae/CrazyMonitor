@@ -16,7 +16,7 @@ from monitor.backends import data_processing
 
 if __name__ == '__main__':
     reactor = data_processing.DataHandler(settings)
-    reactor.loopping()
+    reactor.looping()
 
 
 

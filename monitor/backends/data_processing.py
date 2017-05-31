@@ -21,6 +21,7 @@ class DataHandler(object):
     def looping(self):
         '''
         start looping data ...
+        检测所有主机需要监控的服务的数据有没有按时汇报上来，只做基本检测
         :return:
         '''
         #get latest report data
@@ -296,10 +297,10 @@ class ExpressionProcess(object):
         print(data_range)
         return data_range
     def process(self):
-        data = self.load_data_from_redis() #已经按照用户的配置把数据 从redis里取出来了, 比如 最近5分钟,或10分钟的数据
+        data_list = self.load_data_from_redis() #已经按照用户的配置把数据 从redis里取出来了, 比如 最近5分钟,或10分钟的数据
         data_calc_func = getattr(self,'get_%s' % self.expression_obj.data_calc_func)
         #data_calc_func = self.get_avg...
-        single_expression_calc_res = data_calc_func(data) #[True,43,None]
+        single_expression_calc_res = data_calc_func(data_list) #[True,43,None]
         print("---res of single_expression_calc_res ",single_expression_calc_res)
         if single_expression_calc_res: #确保上面的条件 有正确的返回
             res_dic = {

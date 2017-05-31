@@ -73,6 +73,8 @@ def host_detail_old(request,host_id):
 
 
     return render(request,'host_detail.html', {'host_obj':host_obj,'monitored_services':monitored_services})
+
+
 def hosts_status(request):
 
     hosts_data_serializer = serializer.StatusSerializer(request,REDIS_OBJ)
@@ -107,7 +109,7 @@ def service_data_report(request):
             #data['report_time'] = time.time()
             #REDIS_OBJ.lpush(redis_key_format,json.dumps(data))
 
-            #在这里同时触发监控
+            #在这里同时触发监控(在这里触发的好处是什么呢？)
             host_obj = models.Host.objects.get(id=client_id)
             service_triggers = get_host_triggers(host_obj)
 
@@ -161,3 +163,9 @@ def trigger_list(request):
 
     alert_list = host_obj.eventlog_set.all().order_by('-date')
     return render(request,'monitor/trigger_list.html',locals())
+
+
+def host_groups(request):
+
+    host_groups = models.HostGroup.objects.all()
+    return render(request,'monitor/host_groups.html',locals())

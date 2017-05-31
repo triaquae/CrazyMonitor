@@ -24,7 +24,7 @@
                         {% for alert in alert_list %}
                         <tr>
                             <td>{{ alert.get_event_type_display }}</td>
-                            <td>{{ alert.trigger }}</td>
+                            <td style="background-color: {% get_trigger_severity_color alert %}">{{ alert.trigger }}</td>
                             <td>{{ alert.log }}</td>
                             <td>{{ alert.date }}</td>
 

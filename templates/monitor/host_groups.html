@@ -1,0 +1,87 @@
+{% extends 'monitor/index.html' %}
+
+{% block  page-title %}
+
+    主机组
+{% endblock %}
+
+{% block breadcrumb%}
+<ol class="breadcrumb">
+    <li><a href="{% url 'dashboard' %}">Home</a></li>
+    <li class="active">主机组</li>
+</ol>
+{% endblock %}
+
+{% block page-content %}
+
+  <div class="row">
+    {% for group in host_groups %}
+    <div class="col-lg-6">
+
+        <!--Network Line Chart-->
+        <!--===================================================-->
+        <div class="panel">
+            <div class="panel-heading">
+                <div class="panel-control">
+                    <button id="demo-panel-network-refresh" data-toggle="panel-overlay" data-target="#demo-panel-network" class="btn"><i class="fa fa-rotate-right"></i></button>
+                    <div class="btn-group">
+                        <button class="dropdown-toggle btn" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-gear"></i></button>
+                        <ul class="dropdown-menu dropdown-menu-right">
+                            <li><a href="#">Action</a></li>
+                            <li><a href="#">Another action</a></li>
+                            <li><a href="#">Something else here</a></li>
+                            <li class="divider"></li>
+                            <li><a href="#">Separated link</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <h3 class="panel-title">{{ group.name }}</h3>
+            </div>
+
+
+
+            <!--Chart information-->
+            <div class="panel-body " style="position:relative;z-index:2">
+                <div class="row">
+                 <table id='host_status_list' class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <td>主机数</td>
+                            <td>服务数</td>
+                            <td>已触发事件</td>
+                            <td>Diaster</td>
+                            <td>High</td>
+                            <td>Average</td>
+                            <td>Warning</td>
+                            <td>Info</td>
+                            <td>最后更新</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ group.host_set.all.count }}</td>
+                        </tr>
+                    </tbody>
+                 </table>
+                </div>
+
+            </div>
+
+
+        </div>
+        <!--===================================================-->
+        <!--End network line chart-->
+
+    </div>
+
+    {% endfor %}
+  </div>
+
+{% endblock %}
+
+{% block bottom-js %}
+<script>
+
+
+</script>
+{% endblock %}

@@ -27,3 +27,18 @@ def trigger_context(data):
         html +=line
 
     return mark_safe(html)
+
+
+
+
+@register.simple_tag
+def get_trigger_severity_color(alert_obj):
+    severity_choices = {
+        1:'white',
+        2:'yellow',
+        3:'orange',
+        4:'red',
+        5:'darkred',
+    }
+
+    return severity_choices.get(alert_obj.trigger.severity) or ''

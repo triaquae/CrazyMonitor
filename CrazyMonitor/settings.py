@@ -154,7 +154,7 @@ TRIGGER_CHAN = 'trigger_event_channel'
 
 STATUS_DATA_OPTIMIZATION = {
     'latest':[0,600], #0 存储真实数据,600个点
-    '10mins':[600,600], #4days
+    '10mins':[600,600], #4days, 每600s进行一次优化，存最大600个点
     '30mins':[1800,600],#14days
     '60mins':[3600,600], #25days
 }
