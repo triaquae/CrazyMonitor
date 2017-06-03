@@ -81,6 +81,63 @@ class TriggersView(object):
 
         return trigger_dic
 
+
+class GroupStatusSerializer(object):
+    def __init__(self,request,redis):
+        self.request = request
+        self.redis = redis
+
+    def get_all_groups_status(self):
+
+        data_set = [] #store all groups status
+
+        group_objs = models.HostGroup.objects.all()
+
+
+
+        for group in group_objs:
+
+            group_data = {
+                #'group_id':
+                'hosts':[],
+                'services':[],
+                'triggers':[],
+                'events':{'diaster':[],
+                          'high':[],
+                          'average':[],
+                          'warning':[],
+                          'info':[]},
+                'last_update':None
+            }
+
+            host_list  = group.host_set.all()
+
+            template_list = []
+            service_list = []
+
+            template_list.extend(group.templates.all())
+
+            for host_obj in host_list:
+                template_list.extend(host_obj.templates.select_related())
+            #print("group ",group.name,template_list)
+
+            template_list = set(template_list)
+
+            for template_obj in template_list:
+                service_list.extend(template_obj.services.all())
+
+            service_list = set(service_list)
+            #print("service",service_list)
+            group_data['hosts'] =  [{'id':obj.id} for obj in set(host_list)]
+            group_data['services'] =  [{'id':obj.id} for obj in set(service_list)]
+
+            #print(group_data)
+
+            group_data['group_id'] = group.id
+            data_set.append(group_data)
+
+        print(json.dumps(data_set))
+
 class StatusSerializer(object):
     def __init__(self,request,redis):
         self.request = request
@@ -96,6 +153,7 @@ class StatusSerializer(object):
         for h in host_obj_list:
             host_data_list.append( self.single_host_info(h)  )
         return host_data_list
+
     def single_host_info(self,host_obj):
         '''
         serialize single host into a dic

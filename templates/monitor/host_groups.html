@@ -82,6 +82,22 @@
 {% block bottom-js %}
 <script>
 
+function GetHostGroupStatus() {
+    /*获取每个组的主机数、服务数及状态情况*/
+
+    $.getJSON("{% url 'get_hostgroups_status' %}",function(callback){
+        console.log(callback)
+
+    });//end getJSON
+
+}
+
+
+$(document).ready(function () {
+
+    GetHostGroupStatus()
+
+})
 
 </script>
 {% endblock %}

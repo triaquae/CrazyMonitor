@@ -34,9 +34,10 @@ class Host(models.Model):
         return self.name
 
 class HostGroup(models.Model):
-    name =  models.CharField(max_length=64,unique=True)
+    name = models.CharField(max_length=64,unique=True)
     templates = models.ManyToManyField("Template",blank=True)
     memo = models.TextField(u"备注",blank=True,null=True)
+
     def __str__(self):
         return self.name
 
@@ -50,6 +51,7 @@ class ServiceIndex(models.Model):
     )
     data_type = models.CharField(u'指标数据类型',max_length=32,choices=data_type_choices,default='int')
     memo = models.CharField(u"备注",max_length=128,blank=True,null=True)
+
     def __str__(self):
         return "%s.%s" %(self.name,self.key)
 
@@ -63,8 +65,7 @@ class Service(models.Model):
 
     def __str__(self):
         return self.name
-    #def get_service_items(obj):
-    #    return ",".join([i.name for i in obj.items.all()])
+
 
 class Template(models.Model):
     name = models.CharField(u'模版名称',max_length=64,unique=True)

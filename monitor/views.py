@@ -22,11 +22,11 @@ REDIS_OBJ = redis_conn.redis_conn(settings)
 def dashboard(request):
 
     return render(request,'monitor/dashboard.html')
+
 def triggers(request):
 
     return render(request,'monitor/triggers.html')
-def index(request):
-    return render(request,'monitor/index.html')
+
 
 def hosts(request):
     host_list = models.Host.objects.all()
@@ -82,6 +82,14 @@ def hosts_status(request):
 
     return HttpResponse(json.dumps(hosts_data))
 
+
+def hostgroups_status(request):
+    group_serializer = serializer.GroupStatusSerializer(request,REDIS_OBJ)
+    group_serializer.get_all_groups_status()
+
+    return HttpResponse('ss')
+
+
 def client_configs(request,client_id):
     print("--->",client_id)
     config_obj = ClientHandler(client_id)
@@ -129,7 +137,7 @@ def service_data_report(request):
     return HttpResponse(json.dumps("---report success---"))
 
 
-def graphs_gerator(request):
+def graphs_generator(request):
 
     graphs_generator = graphs.GraphGenerator2(request,REDIS_OBJ)
     graphs_data = graphs_generator.get_host_graph()
@@ -149,12 +157,7 @@ def graph_bak(request):
     if graph_data:
         return HttpResponse(json.dumps(graph_data))
 
-# def trigger_list(request):
-#
-#     trigger_handle_obj = serializer.TriggersView(request,REDIS_OBJ)
-#     trigger_data = trigger_handle_obj.fetch_related_filters()
-#
-#     return render(request,'monitor/trigger_list.html',{'trigger_list':trigger_data})
+
 def trigger_list(request):
 
     host_id = request.GET.get("by_host_id")
