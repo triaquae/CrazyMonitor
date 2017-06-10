@@ -120,7 +120,7 @@ class DataHandler(object):
         for expression in trigger_obj.triggerexpression_set.select_related().order_by('id'):
             print(expression,expression.logic_type)
             expression_process_obj = ExpressionProcess(self,host_obj,expression)
-            single_expression_res = expression_process_obj.process()
+            single_expression_res = expression_process_obj.process() #得到单条expression表达式的结果
             if single_expression_res:
                 calc_sub_res_list.append(single_expression_res)
                 if single_expression_res['expression_obj'].logic_type: #不是最后一条
@@ -213,7 +213,7 @@ class DataHandler(object):
         #alert.sendsms(msg)
         if redis_obj: #从外部调用 时才用的到,为了避免重复调用 redis连接
             self.redis = redis_obj
-        print("\033[43;1mgoing to send alert msg............\033[0m")
+        print("\033[43;1mgoing to send alert msg to trigger queue............\033[0m")
         print('trigger_notifier argv:',host_obj,trigger_id, positive_expressions,redis_obj)
         #
         msg_dic = {'host_id':host_obj.id,
@@ -261,6 +261,7 @@ class ExpressionProcess(object):
         self.time_range = self.expression_obj.data_calc_args.split(',')[0] #获取要从redis中取多长时间的数据,单位为minute
 
         print("\033[31;1m------>%s\033[0m" % self.service_redis_key)
+
     def load_data_from_redis(self):
         '''load data from redis according to expression's configuration'''
         time_in_sec = int(self.time_range) * 60  #下面的+60是默认多取一分钟数据,宁多勿少,多出来的后面会去掉
@@ -296,7 +297,9 @@ class ExpressionProcess(object):
 
         print(data_range)
         return data_range
+
     def process(self):
+        """算出单条expression表达式的结果"""
         data_list = self.load_data_from_redis() #已经按照用户的配置把数据 从redis里取出来了, 比如 最近5分钟,或10分钟的数据
         data_calc_func = getattr(self,'get_%s' % self.expression_obj.data_calc_func)
         #data_calc_func = self.get_avg...
@@ -344,7 +347,7 @@ class ExpressionProcess(object):
             avg_res = sum(clean_data_list)/ len(clean_data_list)
             print("\033[46;1m----avg res:%s\033[0m" % avg_res)
             return [self.judge(avg_res), avg_res,None]
-            print('clean data list:', clean_data_list)
+            #print('clean data list:', clean_data_list)
         elif clean_data_dic:
             for k,v in clean_data_dic.items():
                 clean_v_list = [float(i) for i in v]

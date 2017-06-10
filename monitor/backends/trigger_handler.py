@@ -13,11 +13,11 @@ class TriggerHandler(object):
         self.django_settings = django_settings
         self.redis = redis_conn.redis_conn(self.django_settings)
         self.alert_counters ={} #纪录每个action的触发报警次数
-        alert_counters = {
-            1: {2:{'counter':0,'last_alert':None},
-                4:{'counter':1,'last_alert':None}},  #k是action id, {2:0,3:2}这里面的k是主机id,value是报警次数
+        '''alert_counters = {
+            1: {2:{'counter':0,'last_alert':None}, #k 1是主机id, {2:{'counter'}} 2是trigger id
+                4:{'counter':1,'last_alert':None}},  #k是action id, 
             #2: {2:0},
-        }
+        }'''
 
 
 
@@ -36,7 +36,6 @@ class TriggerHandler(object):
             msg = radio.parse_response()
             self.trigger_consume(msg)
 
-
     def trigger_consume(self,msg):
         self.trigger_count +=1
         print("\033[41;1m************Got a trigger msg [%s]**********\033[0m" % self.trigger_count)
@@ -50,16 +49,13 @@ class TriggerHandler(object):
 
 class ActionHandler(object):
     '''
-    负责把达到报警条件 的trigger进行分析 ,并根据 action 表中的配置来进行报警
+    负责把达到报警条件的trigger进行分析 ,并根据 action 表中的配置来进行报警
     '''
 
     def __init__(self,trigger_data,alert_counter_dic):
         self.trigger_data = trigger_data
         #self.trigger_process()
         self.alert_counter_dic = alert_counter_dic
-
-
-
 
     def record_log(self,action_obj,action_operation,host_id,trigger_data):
         """record alert log into DB"""
@@ -122,6 +118,8 @@ class ActionHandler(object):
             matched_action_list = set() # 一个空集合
             for action in actions_set:
                 #每个action 都 可以直接 包含多个主机或主机组,
+                # 为什么tigger里关联了template,template里又关联了主机，那action还要直接关联主机呢？
+                #那是因为一个trigger可以被多个template关联，这个trigger触发了，不一定是哪个tempalte里的主机导致的
                 for hg in action.host_groups.select_related():
                     for h in hg.host_set.select_related():
                         if h.id == host_id:# 这个action适用于此主机

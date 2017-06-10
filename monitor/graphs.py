@@ -57,6 +57,7 @@ class GraphGenerator2(object):
             service_data_dic[service_id]['raw_data'] = service_raw_data
 
         return service_data_dic
+
 class GraphGenerator(object):
     '''
     generate graphs
@@ -72,6 +73,7 @@ class GraphGenerator(object):
         self.redis = redis_obj
 
         print("sub service key:", self.sub_service_name)
+
     def get_graph_data(self):
         #data_store_key = "StatusData_%s_%s_latest" %(self.host_id,self.service_name)
         data_store_key = "StatusData_%s_%s_%s" %(self.host_id,self.service_name,self.time_range)

@@ -40,6 +40,7 @@ class ManagementUtility(object):
             self.main_help_text()
         else:
             self.registered_actions[sys.argv[1]]()
+
     def start(self):
         '''start monitor server frontend and backend'''
         reactor = data_processing.DataHandler(settings)
@@ -47,8 +48,6 @@ class ManagementUtility(object):
 
     def stop(self):
         '''stop monitor server'''
-
-
 
     def trigger_watch(self):
         '''start to listen triggers'''

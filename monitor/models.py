@@ -71,6 +71,7 @@ class Template(models.Model):
     name = models.CharField(u'模版名称',max_length=64,unique=True)
     services = models.ManyToManyField('Service',verbose_name=u"服务列表")
     triggers = models.ManyToManyField('Trigger',verbose_name=u"触发器列表",blank=True)
+
     def __str__(self):
         return self.name
 
@@ -91,14 +92,12 @@ class TriggerExpression(models.Model):
     data_calc_func= models.CharField(u"数据处理方式",choices=data_calc_type_choices,max_length=64)
     data_calc_args = models.CharField(u"函数传入参数",help_text=u"若是多个参数,则用,号分开,第一个值是时间",max_length=64)
     threshold = models.IntegerField(u"阈值")
-
-
     logic_type_choices = (('or','OR'),('and','AND'))
     logic_type = models.CharField(u"与一个条件的逻辑关系",choices=logic_type_choices,max_length=32,blank=True,null=True)
+
     def __str__(self):
         return "%s %s(%s(%s))" %(self.service_index,self.operator_type,self.data_calc_func,self.data_calc_args)
-    class Meta:
-        pass #unique_together = ('trigger_id','service')
+
 
 class Trigger(models.Model):
     name = models.CharField(u'触发器名称',max_length=64)
@@ -119,13 +118,13 @@ class Trigger(models.Model):
 
 
 class Action(models.Model):
-    name =  models.CharField(max_length=64,unique=True)
-    host_groups = models.ManyToManyField('HostGroup',blank=True)
+    """定义trigger发生后，如何报警"""
+    name = models.CharField(max_length=64,unique=True)
+    host_groups = models.ManyToManyField('HostGroup',blank=True) #在template里已经关联了主机和tirgger了，为什么这里还要有
     hosts = models.ManyToManyField('Host',blank=True)
     triggers = models.ManyToManyField('Trigger',blank=True,help_text=u"想让哪些trigger触发当前报警动作")
     interval = models.IntegerField(u'告警间隔(s)',default=300)
     operations = models.ManyToManyField('ActionOperation')
-
     recover_notice = models.BooleanField(u'故障恢复后发送通知消息',default=True)
     recover_subject = models.CharField(max_length=128,blank=True,null=True)
     recover_message = models.TextField(blank=True,null=True)
@@ -135,8 +134,10 @@ class Action(models.Model):
     def __str__(self):
         return self.name
 
+
 class ActionOperation(models.Model):
-    name =  models.CharField(max_length=64)
+    """报警动作列表"""
+    name = models.CharField(max_length=64)
     step = models.SmallIntegerField(u"第n次告警",default=1,help_text="当trigger触发次数小于这个值时就执行这条记录里报警方式")
     action_type_choices = (
         ('email','Email'),
@@ -186,10 +187,8 @@ class UserProfile(auth.AbstractBaseUser, auth.PermissionsMixin):
     )
     password = models.CharField(_('password'), max_length=128,
                                 help_text=mark_safe('''<a class='btn-link' href='password'>重置密码</a>'''))
-
     phone = models.BigIntegerField(blank=True,null=True)
     weixin = models.CharField(max_length=64,blank=True,null=True)
-
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
     is_staff = models.BooleanField(
@@ -218,13 +217,7 @@ class UserProfile(auth.AbstractBaseUser, auth.PermissionsMixin):
     def __str__(self):  # __str__ on Python 2
         return self.email
 
-    # def has_perm(self, perm, obj=None):
-    #     "Does the user have a specific permission?"
-    #     # Simplest possible answer: Yes, always
-    #     return True
     def has_perms(self, perm, obj=None):
-        "Does the user have a specific permission?"
-        # Simplest possible answer: Yes, always
         return True
 
     def has_module_perms(self, app_label):
